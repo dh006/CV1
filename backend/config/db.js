@@ -3,15 +3,28 @@ require("dotenv").config();
 
 let sequelize;
 
-if (process.env.DATABASE_URL) {
-  // Railway / production — dùng connection string
-  sequelize = new Sequelize(process.env.DATABASE_URL, {
+if (process.env.MYSQL_URL || process.env.DATABASE_URL) {
+  // Railway connection string
+  sequelize = new Sequelize(process.env.MYSQL_URL || process.env.DATABASE_URL, {
     dialect: "mysql",
     logging: false,
     dialectOptions: {
-      ssl: process.env.DB_SSL === "true" ? { require: true, rejectUnauthorized: false } : false,
+      ssl: false,
     },
   });
+} else if (process.env.MYSQLHOST) {
+  // Railway individual variables
+  sequelize = new Sequelize(
+    process.env.MYSQLDATABASE || process.env.DB_NAME || "railway",
+    process.env.MYSQLUSER || process.env.DB_USER || "root",
+    process.env.MYSQLPASSWORD || process.env.DB_PASS || "",
+    {
+      host: process.env.MYSQLHOST || process.env.DB_HOST || "127.0.0.1",
+      port: Number(process.env.MYSQLPORT || process.env.DB_PORT || 3306),
+      dialect: "mysql",
+      logging: false,
+    }
+  );
 } else {
   // Local development
   sequelize = new Sequelize(
@@ -20,6 +33,7 @@ if (process.env.DATABASE_URL) {
     process.env.DB_PASS || null,
     {
       host: process.env.DB_HOST || "127.0.0.1",
+      port: Number(process.env.DB_PORT || 3306),
       dialect: "mysql",
       logging: false,
     }

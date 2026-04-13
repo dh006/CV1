@@ -5,20 +5,40 @@ import { productAPI, categoryAPI, brandAPI } from "../../../services/api";
 const getColorHex = (name) => {
   const n = (name || "").toLowerCase().trim();
   const map = {
-    "đen": "#1a1a1a", "den": "#1a1a1a", "black": "#1a1a1a",
-    "trắng": "#f0f0f0", "trang": "#f0f0f0", "white": "#f0f0f0",
-    "xám": "#9ca3af", "xam": "#9ca3af", "gray": "#9ca3af",
-    "xanh navy": "#001C40", "navy": "#001C40",
-    "xanh dương": "#3b82f6", "blue": "#3b82f6",
-    "xanh lá": "#22c55e", "green": "#22c55e",
+    đen: "#1a1a1a",
+    den: "#1a1a1a",
+    black: "#1a1a1a",
+    trắng: "#f0f0f0",
+    trang: "#f0f0f0",
+    white: "#f0f0f0",
+    xám: "#9ca3af",
+    xam: "#9ca3af",
+    gray: "#9ca3af",
+    "xanh navy": "#001C40",
+    navy: "#001C40",
+    "xanh dương": "#3b82f6",
+    blue: "#3b82f6",
+    "xanh lá": "#22c55e",
+    green: "#22c55e",
     "xanh rêu": "#4d7c0f",
-    "đỏ": "#dc2626", "do": "#dc2626", "red": "#dc2626",
-    "cam": "#f97316", "orange": "#f97316",
-    "vàng": "#eab308", "vang": "#eab308",
-    "hồng": "#ec4899", "hong": "#ec4899", "pink": "#ec4899",
-    "tím": "#8b5cf6", "tim": "#8b5cf6", "purple": "#8b5cf6",
-    "nâu": "#92400e", "nau": "#92400e", "brown": "#92400e",
-    "be": "#d4b896", "kem": "#fef3c7",
+    đỏ: "#dc2626",
+    do: "#dc2626",
+    red: "#dc2626",
+    cam: "#f97316",
+    orange: "#f97316",
+    vàng: "#eab308",
+    vang: "#eab308",
+    hồng: "#ec4899",
+    hong: "#ec4899",
+    pink: "#ec4899",
+    tím: "#8b5cf6",
+    tim: "#8b5cf6",
+    purple: "#8b5cf6",
+    nâu: "#92400e",
+    nau: "#92400e",
+    brown: "#92400e",
+    be: "#d4b896",
+    kem: "#fef3c7",
     "đen nâu": "#3d2b1f",
   };
   for (const [key, hex] of Object.entries(map)) {
@@ -30,9 +50,16 @@ const getColorHex = (name) => {
 const AddProduct = () => {
   const navigate = useNavigate();
   const [product, setProduct] = useState({
-    name: "", price: "", oldPrice: "", quantity: "",
-    categoryId: "", brandId: "", description: "",
-    label: "", sizes: "S,M,L,XL,2XL", colors: "",
+    name: "",
+    price: "",
+    oldPrice: "",
+    quantity: "",
+    categoryId: "",
+    brandId: "",
+    description: "",
+    label: "",
+    sizes: "S,M,L,XL,2XL",
+    colors: "",
   });
 
   // Mỗi ảnh: { file, preview, isUrl, colorTag }
@@ -41,7 +68,13 @@ const AddProduct = () => {
   const [urlInput, setUrlInput] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const [colorList, setColorList] = useState([]);
-  const [sizeStockMap, setSizeStockMap] = useState({ S: 0, M: 0, L: 0, XL: 0, "2XL": 0 });
+  const [sizeStockMap, setSizeStockMap] = useState({
+    S: 0,
+    M: 0,
+    L: 0,
+    XL: 0,
+    "2XL": 0,
+  });
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -51,35 +84,54 @@ const AddProduct = () => {
       .then(([catRes, brandRes]) => {
         setCategories(catRes.data);
         setBrands(brandRes.data || []);
-      }).catch(console.error);
+      })
+      .catch(console.error);
   }, []);
 
   const handleColorsChange = (val) => {
     setProduct((prev) => ({ ...prev, colors: val }));
-    setColorList(val.split(",").map((c) => c.trim()).filter(Boolean));
+    setColorList(
+      val
+        .split(",")
+        .map((c) => c.trim())
+        .filter(Boolean),
+    );
   };
 
   const handleSizesChange = (val) => {
     setProduct((prev) => ({ ...prev, sizes: val }));
-    const list = val.split(",").map((s) => s.trim()).filter(Boolean);
+    const list = val
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
     setSizeStockMap((prev) => {
       const next = {};
-      list.forEach((sz) => { next[sz] = prev[sz] ?? 0; });
+      list.forEach((sz) => {
+        next[sz] = prev[sz] ?? 0;
+      });
       return next;
     });
   };
 
-  const totalStock = Object.values(sizeStockMap).reduce((s, v) => s + (Number(v) || 0), 0);
+  const totalStock = Object.values(sizeStockMap).reduce(
+    (s, v) => s + (Number(v) || 0),
+    0,
+  );
 
   const addImages = useCallback((files) => {
     const newImgs = Array.from(files).map((file) => ({
-      file, preview: URL.createObjectURL(file),
-      isMain: false, isHover: false, isUrl: false, colorTag: "",
+      file,
+      preview: URL.createObjectURL(file),
+      isMain: false,
+      isHover: false,
+      isUrl: false,
+      colorTag: "",
     }));
     setImages((prev) => {
       const combined = [...prev, ...newImgs];
       // Ảnh đầu tiên = main
-      if (!combined.some((i) => i.isMain) && combined.length > 0) combined[0].isMain = true;
+      if (!combined.some((i) => i.isMain) && combined.length > 0)
+        combined[0].isMain = true;
       // Ảnh thứ 2 = hover (chỉ khi có ít nhất 2 ảnh và chưa có hover)
       if (!combined.some((i) => i.isHover) && combined.length > 1) {
         const firstNonMain = combined.find((i) => !i.isMain);
@@ -92,7 +144,14 @@ const AddProduct = () => {
   const addImageByUrl = () => {
     if (!urlInput.trim()) return;
     setImages((prev) => {
-      const newImg = { file: null, preview: urlInput.trim(), isMain: false, isHover: false, isUrl: true, colorTag: "" };
+      const newImg = {
+        file: null,
+        preview: urlInput.trim(),
+        isMain: false,
+        isHover: false,
+        isUrl: true,
+        colorTag: "",
+      };
       const combined = [...prev, newImg];
       if (!combined.some((i) => i.isMain)) combined[0].isMain = true;
       if (!combined.some((i) => i.isHover) && combined.length > 1) {
@@ -130,11 +189,15 @@ const AddProduct = () => {
   };
 
   const removeHover = (idx) => {
-    setImages((prev) => prev.map((img, i) => i === idx ? { ...img, isHover: false } : img));
+    setImages((prev) =>
+      prev.map((img, i) => (i === idx ? { ...img, isHover: false } : img)),
+    );
   };
 
   const setColorTag = (idx, color) => {
-    setImages((prev) => prev.map((img, i) => i === idx ? { ...img, colorTag: color } : img));
+    setImages((prev) =>
+      prev.map((img, i) => (i === idx ? { ...img, colorTag: color } : img)),
+    );
   };
 
   const removeImage = (idx) => {
@@ -154,11 +217,16 @@ const AddProduct = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (images.length === 0) { alert("Vui lòng chọn ít nhất 1 ảnh!"); return; }
+    if (images.length === 0) {
+      alert("Vui lòng chọn ít nhất 1 ảnh!");
+      return;
+    }
     setSaving(true);
 
     const formData = new FormData();
-    Object.entries(product).forEach(([k, v]) => { if (v !== "") formData.append(k, v); });
+    Object.entries(product).forEach(([k, v]) => {
+      if (v !== "") formData.append(k, v);
+    });
     if (Object.keys(sizeStockMap).length > 0) {
       formData.append("sizeStock", JSON.stringify(sizeStockMap));
     }
@@ -169,7 +237,9 @@ const AddProduct = () => {
     if (colorList.length > 0 && images.some((img) => img.colorTag)) {
       // Sắp theo thứ tự màu
       const byColor = {};
-      colorList.forEach((c) => { byColor[c] = images.find((img) => img.colorTag === c); });
+      colorList.forEach((c) => {
+        byColor[c] = images.find((img) => img.colorTag === c);
+      });
       const colorOrdered = colorList.map((c) => byColor[c]).filter(Boolean);
       const untagged = images.filter((img) => !img.colorTag);
       sorted = [...colorOrdered, ...untagged];
@@ -189,7 +259,8 @@ const AddProduct = () => {
 
     formData.append("mainIsUrl", sorted[0].isUrl ? "true" : "false");
     fileImgs.forEach((img) => formData.append("images", img.file));
-    if (remoteUrls.length > 0) formData.append("remoteUrls", JSON.stringify(remoteUrls));
+    if (remoteUrls.length > 0)
+      formData.append("remoteUrls", JSON.stringify(remoteUrls));
 
     try {
       await productAPI.create(formData);
@@ -552,25 +623,77 @@ const AddProduct = () => {
 
             {/* PREVIEW ĐẠI DIỆN + HOVER */}
             {(mainImg || hoverImg) && (
-              <div style={{ display: "flex", gap: "8px", marginBottom: "14px" }}>
+              <div
+                style={{ display: "flex", gap: "8px", marginBottom: "14px" }}
+              >
                 {mainImg && (
                   <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: "11px", fontWeight: "700", color: "#001C40", marginBottom: "4px", textAlign: "center" }}>⭐ Đại diện</p>
+                    <p
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: "700",
+                        color: "#001C40",
+                        marginBottom: "4px",
+                        textAlign: "center",
+                      }}
+                    >
+                      ⭐ Đại diện
+                    </p>
                     <div style={s.mainPreviewWrap}>
-                      <img src={mainImg.preview} alt="main" style={s.mainPreviewImg} />
+                      <img
+                        src={mainImg.preview}
+                        alt="main"
+                        style={s.mainPreviewImg}
+                      />
                       {mainImg.colorTag && (
-                        <div style={{ position: "absolute", bottom: "6px", left: "6px", background: getColorHex(mainImg.colorTag), border: "2px solid #fff", borderRadius: "50%", width: "18px", height: "18px" }} />
+                        <div
+                          style={{
+                            position: "absolute",
+                            bottom: "6px",
+                            left: "6px",
+                            background: getColorHex(mainImg.colorTag),
+                            border: "2px solid #fff",
+                            borderRadius: "50%",
+                            width: "18px",
+                            height: "18px",
+                          }}
+                        />
                       )}
                     </div>
                   </div>
                 )}
                 {hoverImg && (
                   <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: "11px", fontWeight: "700", color: "#7c3aed", marginBottom: "4px", textAlign: "center" }}>🖱️ Hover</p>
+                    <p
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: "700",
+                        color: "#7c3aed",
+                        marginBottom: "4px",
+                        textAlign: "center",
+                      }}
+                    >
+                      🖱️ Hover
+                    </p>
                     <div style={{ ...s.mainPreviewWrap, marginBottom: 0 }}>
-                      <img src={hoverImg.preview} alt="hover" style={s.mainPreviewImg} />
+                      <img
+                        src={hoverImg.preview}
+                        alt="hover"
+                        style={s.mainPreviewImg}
+                      />
                       {hoverImg.colorTag && (
-                        <div style={{ position: "absolute", bottom: "6px", left: "6px", background: getColorHex(hoverImg.colorTag), border: "2px solid #fff", borderRadius: "50%", width: "18px", height: "18px" }} />
+                        <div
+                          style={{
+                            position: "absolute",
+                            bottom: "6px",
+                            left: "6px",
+                            background: getColorHex(hoverImg.colorTag),
+                            border: "2px solid #fff",
+                            borderRadius: "50%",
+                            width: "18px",
+                            height: "18px",
+                          }}
+                        />
                       )}
                     </div>
                   </div>
@@ -582,25 +705,66 @@ const AddProduct = () => {
             <div style={s.group}>
               <label style={s.label}>Nhập link ảnh (URL)</label>
               <div style={{ display: "flex", gap: "8px" }}>
-                <input style={s.input} type="text" placeholder="Dán link ảnh tại đây..."
-                  value={urlInput} onChange={(e) => setUrlInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addImageByUrl())} />
-                <button type="button" onClick={addImageByUrl} style={s.addUrlBtn}>Thêm</button>
+                <input
+                  style={s.input}
+                  type="text"
+                  placeholder="Dán link ảnh tại đây..."
+                  value={urlInput}
+                  onChange={(e) => setUrlInput(e.target.value)}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" && (e.preventDefault(), addImageByUrl())
+                  }
+                />
+                <button
+                  type="button"
+                  onClick={addImageByUrl}
+                  style={s.addUrlBtn}
+                >
+                  Thêm
+                </button>
               </div>
             </div>
 
-            <div style={{ textAlign: "center", margin: "8px 0", fontSize: "12px", color: "#9ca3af" }}>— HOẶC —</div>
+            <div
+              style={{
+                textAlign: "center",
+                margin: "8px 0",
+                fontSize: "12px",
+                color: "#9ca3af",
+              }}
+            >
+              — HOẶC —
+            </div>
 
             {/* UPLOAD ZONE */}
-            <div style={{ ...s.dropZone, borderColor: dragOver ? "#001C40" : "#e5e7eb", background: dragOver ? "#f0f4ff" : "#f9fafb" }}
-              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            <div
+              style={{
+                ...s.dropZone,
+                borderColor: dragOver ? "#001C40" : "#e5e7eb",
+                background: dragOver ? "#f0f4ff" : "#f9fafb",
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOver(true);
+              }}
               onDragLeave={() => setDragOver(false)}
-              onDrop={(e) => { e.preventDefault(); setDragOver(false); addImages(e.dataTransfer.files); }}>
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOver(false);
+                addImages(e.dataTransfer.files);
+              }}
+            >
               <span style={{ fontSize: "32px" }}>📸</span>
               <p style={s.dropText}>Kéo thả ảnh vào đây hoặc</p>
               <label style={s.chooseBtn}>
                 Chọn ảnh
-                <input type="file" accept="image/*" multiple onChange={(e) => addImages(e.target.files)} style={{ display: "none" }} />
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => addImages(e.target.files)}
+                  style={{ display: "none" }}
+                />
               </label>
               <p style={s.dropHint}>JPG, PNG, WEBP — tối đa 5MB/ảnh</p>
             </div>
@@ -609,28 +773,102 @@ const AddProduct = () => {
             {images.length > 0 && (
               <div style={s.imgList}>
                 {/* Preview ảnh đại diện + hover */}
-                <div style={{ display: "flex", gap: "10px", marginBottom: "14px" }}>
+                <div
+                  style={{ display: "flex", gap: "10px", marginBottom: "14px" }}
+                >
                   <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: "11px", fontWeight: "700", color: "#001C40", marginBottom: "6px", textAlign: "center" }}>
+                    <p
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: "700",
+                        color: "#001C40",
+                        marginBottom: "6px",
+                        textAlign: "center",
+                      }}
+                    >
                       ⭐ Ảnh đại diện
                     </p>
-                    <div style={{ aspectRatio: "3/4", borderRadius: "8px", overflow: "hidden", background: "#f3f4f6", border: "2px solid #001C40" }}>
+                    <div
+                      style={{
+                        aspectRatio: "3/4",
+                        borderRadius: "8px",
+                        overflow: "hidden",
+                        background: "#f3f4f6",
+                        border: "2px solid #001C40",
+                      }}
+                    >
                       {mainImg ? (
-                        <img src={mainImg.preview} alt="main" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        <img
+                          src={mainImg.preview}
+                          alt="main"
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                          }}
+                        />
                       ) : (
-                        <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: "12px" }}>Chưa có</div>
+                        <div
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "#9ca3af",
+                            fontSize: "12px",
+                          }}
+                        >
+                          Chưa có
+                        </div>
                       )}
                     </div>
                   </div>
                   <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: "11px", fontWeight: "700", color: "#7c3aed", marginBottom: "6px", textAlign: "center" }}>
+                    <p
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: "700",
+                        color: "#7c3aed",
+                        marginBottom: "6px",
+                        textAlign: "center",
+                      }}
+                    >
                       🖱️ Ảnh hover
                     </p>
-                    <div style={{ aspectRatio: "3/4", borderRadius: "8px", overflow: "hidden", background: "#f3f4f6", border: "2px solid #7c3aed" }}>
+                    <div
+                      style={{
+                        aspectRatio: "3/4",
+                        borderRadius: "8px",
+                        overflow: "hidden",
+                        background: "#f3f4f6",
+                        border: "2px solid #7c3aed",
+                      }}
+                    >
                       {hoverImg ? (
-                        <img src={hoverImg.preview} alt="hover" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        <img
+                          src={hoverImg.preview}
+                          alt="hover"
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                          }}
+                        />
                       ) : (
-                        <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: "12px" }}>Chưa có</div>
+                        <div
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "#9ca3af",
+                            fontSize: "12px",
+                          }}
+                        >
+                          Chưa có
+                        </div>
                       )}
                     </div>
                   </div>
@@ -638,45 +876,119 @@ const AddProduct = () => {
 
                 <p style={s.imgListTitle}>
                   {images.length} ảnh — click ⭐ đặt đại diện · 🖱️ đặt hover
-                  {colorList.length > 0 && <span style={{ color: "#7c3aed" }}> · dropdown gán màu</span>}
+                  {colorList.length > 0 && (
+                    <span style={{ color: "#7c3aed" }}>
+                      {" "}
+                      · dropdown gán màu
+                    </span>
+                  )}
                 </p>
                 <div className="admin-img-grid">
                   {images.map((img, i) => {
                     const hex = img.colorTag ? getColorHex(img.colorTag) : null;
-                    const isLight = hex && ["#f0f0f0", "#fef3c7", "#d4b896", "#e5e7eb"].includes(hex);
+                    const isLight =
+                      hex &&
+                      ["#f0f0f0", "#fef3c7", "#d4b896", "#e5e7eb"].includes(
+                        hex,
+                      );
                     return (
-                      <div key={i} style={{
-                        ...s.imgItem,
-                        border: img.isMain ? "2.5px solid #001C40" : img.isHover ? "2.5px solid #7c3aed" : "1.5px solid #e5e7eb",
-                      }}>
-                        <img src={img.preview} alt={`img-${i}`} style={s.imgThumb}
-                          onError={(e) => { e.target.src = "https://via.placeholder.com/80x106"; }} />
+                      <div
+                        key={i}
+                        style={{
+                          ...s.imgItem,
+                          border: img.isMain
+                            ? "2.5px solid #001C40"
+                            : img.isHover
+                              ? "2.5px solid #7c3aed"
+                              : "1.5px solid #e5e7eb",
+                        }}
+                      >
+                        <img
+                          src={img.preview}
+                          alt={`img-${i}`}
+                          style={s.imgThumb}
+                          onError={(e) => {
+                            e.target.src = "https://via.placeholder.com/80x106";
+                          }}
+                        />
                         {/* Badges */}
                         {img.isMain && <div style={s.badgeMain}>⭐</div>}
                         {img.isHover && <div style={s.badgeHover}>🖱️</div>}
                         {/* Dot màu */}
                         {hex && (
-                          <div style={{ position: "absolute", bottom: colorList.length > 0 ? "26px" : "4px", left: "4px", width: "12px", height: "12px", borderRadius: "50%", background: hex, border: isLight ? "1.5px solid #ccc" : "1.5px solid rgba(255,255,255,0.8)" }} />
+                          <div
+                            style={{
+                              position: "absolute",
+                              bottom: colorList.length > 0 ? "26px" : "4px",
+                              left: "4px",
+                              width: "12px",
+                              height: "12px",
+                              borderRadius: "50%",
+                              background: hex,
+                              border: isLight
+                                ? "1.5px solid #ccc"
+                                : "1.5px solid rgba(255,255,255,0.8)",
+                            }}
+                          />
                         )}
                         {/* Action buttons */}
                         <div style={s.imgActions}>
                           {!img.isMain && (
-                            <button type="button" onClick={() => setMainImage(i)} style={s.setMainBtn} title="Đặt làm ảnh đại diện">⭐</button>
+                            <button
+                              type="button"
+                              onClick={() => setMainImage(i)}
+                              style={s.setMainBtn}
+                              title="Đặt làm ảnh đại diện"
+                            >
+                              ⭐
+                            </button>
                           )}
                           {!img.isHover && !img.isMain && (
-                            <button type="button" onClick={() => setHoverImage(i)} style={s.setHoverBtn} title="Đặt làm ảnh hover">🖱️</button>
+                            <button
+                              type="button"
+                              onClick={() => setHoverImage(i)}
+                              style={s.setHoverBtn}
+                              title="Đặt làm ảnh hover"
+                            >
+                              🖱️
+                            </button>
                           )}
                           {img.isHover && (
-                            <button type="button" onClick={() => removeHover(i)} style={{ ...s.setHoverBtn, background: "rgba(124,58,237,0.15)" }} title="Bỏ hover">🚫</button>
+                            <button
+                              type="button"
+                              onClick={() => removeHover(i)}
+                              style={{
+                                ...s.setHoverBtn,
+                                background: "rgba(124,58,237,0.15)",
+                              }}
+                              title="Bỏ hover"
+                            >
+                              🚫
+                            </button>
                           )}
-                          <button type="button" onClick={() => removeImage(i)} style={s.removeBtn} title="Xóa">✕</button>
+                          <button
+                            type="button"
+                            onClick={() => removeImage(i)}
+                            style={s.removeBtn}
+                            title="Xóa"
+                          >
+                            ✕
+                          </button>
                         </div>
                         {/* Dropdown gán màu */}
                         {colorList.length > 0 && (
-                          <select value={img.colorTag || ""} onChange={(e) => setColorTag(i, e.target.value)}
-                            style={s.colorTagSelect} title="Gán màu cho ảnh này">
+                          <select
+                            value={img.colorTag || ""}
+                            onChange={(e) => setColorTag(i, e.target.value)}
+                            style={s.colorTagSelect}
+                            title="Gán màu cho ảnh này"
+                          >
                             <option value="">— màu —</option>
-                            {colorList.map((c) => <option key={c} value={c}>{c}</option>)}
+                            {colorList.map((c) => (
+                              <option key={c} value={c}>
+                                {c}
+                              </option>
+                            ))}
                           </select>
                         )}
                       </div>
@@ -684,7 +996,13 @@ const AddProduct = () => {
                   })}
                 </div>
                 {colorList.length > 0 && (
-                  <p style={{ fontSize: "11px", color: "#7c3aed", marginTop: "8px" }}>
+                  <p
+                    style={{
+                      fontSize: "11px",
+                      color: "#7c3aed",
+                      marginTop: "8px",
+                    }}
+                  >
                     🎨 Gán màu → user chọn màu nào thì ảnh đó hiện lên
                   </p>
                 )}
@@ -693,8 +1011,18 @@ const AddProduct = () => {
           </div>
 
           <div style={s.actionRow}>
-            <button type="button" onClick={() => navigate("/admin/products")} style={s.cancelBtn}>Hủy bỏ</button>
-            <button type="submit" style={{ ...s.saveBtn, opacity: saving ? 0.7 : 1 }} disabled={saving}>
+            <button
+              type="button"
+              onClick={() => navigate("/admin/products")}
+              style={s.cancelBtn}
+            >
+              Hủy bỏ
+            </button>
+            <button
+              type="submit"
+              style={{ ...s.saveBtn, opacity: saving ? 0.7 : 1 }}
+              disabled={saving}
+            >
               {saving ? "Đang lưu..." : "✅ Thêm sản phẩm"}
             </button>
           </div>
@@ -706,51 +1034,297 @@ const AddProduct = () => {
 
 const s = {
   page: { fontFamily: "'Inter',sans-serif" },
-  header: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px" },
-  title: { fontSize: "22px", fontWeight: "800", color: "#1a1a1a", marginBottom: "4px" },
+  header: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: "24px",
+  },
+  title: {
+    fontSize: "22px",
+    fontWeight: "800",
+    color: "#1a1a1a",
+    marginBottom: "4px",
+  },
   subtitle: { fontSize: "13px", color: "#6b7280" },
-  backBtn: { background: "#f3f4f6", border: "none", padding: "10px 18px", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "600", color: "#374151" },
+  backBtn: {
+    background: "#f3f4f6",
+    border: "none",
+    padding: "10px 18px",
+    borderRadius: "8px",
+    cursor: "pointer",
+    fontSize: "13px",
+    fontWeight: "600",
+    color: "#374151",
+  },
   grid: { display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: "20px" },
-  card: { background: "#fff", border: "1px solid #e5e7eb", borderRadius: "12px", padding: "20px", marginBottom: "16px" },
-  cardTitle: { fontSize: "14px", fontWeight: "700", color: "#1a1a1a", marginBottom: "16px", paddingBottom: "12px", borderBottom: "1px solid #f3f4f6" },
+  card: {
+    background: "#fff",
+    border: "1px solid #e5e7eb",
+    borderRadius: "12px",
+    padding: "20px",
+    marginBottom: "16px",
+  },
+  cardTitle: {
+    fontSize: "14px",
+    fontWeight: "700",
+    color: "#1a1a1a",
+    marginBottom: "16px",
+    paddingBottom: "12px",
+    borderBottom: "1px solid #f3f4f6",
+  },
   group: { marginBottom: "16px" },
   row2: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" },
   row3: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" },
-  label: { display: "block", fontSize: "12px", fontWeight: "600", color: "#374151", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.5px" },
-  input: { width: "100%", padding: "10px 14px", border: "1.5px solid #e5e7eb", borderRadius: "8px", fontSize: "14px", outline: "none", fontFamily: "inherit", backgroundColor: "#fafafa" },
-  noteBox: { background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: "10px", padding: "14px 16px" },
-  noteTitle: { fontSize: "13px", fontWeight: "700", color: "#0369a1", marginBottom: "8px" },
-  noteList: { fontSize: "12px", color: "#374151", lineHeight: "1.8", paddingLeft: "16px", margin: 0 },
+  label: {
+    display: "block",
+    fontSize: "12px",
+    fontWeight: "600",
+    color: "#374151",
+    marginBottom: "6px",
+    textTransform: "uppercase",
+    letterSpacing: "0.5px",
+  },
+  input: {
+    width: "100%",
+    padding: "10px 14px",
+    border: "1.5px solid #e5e7eb",
+    borderRadius: "8px",
+    fontSize: "14px",
+    outline: "none",
+    fontFamily: "inherit",
+    backgroundColor: "#fafafa",
+  },
+  noteBox: {
+    background: "#f0f9ff",
+    border: "1px solid #bae6fd",
+    borderRadius: "10px",
+    padding: "14px 16px",
+  },
+  noteTitle: {
+    fontSize: "13px",
+    fontWeight: "700",
+    color: "#0369a1",
+    marginBottom: "8px",
+  },
+  noteList: {
+    fontSize: "12px",
+    color: "#374151",
+    lineHeight: "1.8",
+    paddingLeft: "16px",
+    margin: 0,
+  },
   // Size stock
-  sizeStockGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))", gap: "10px", marginBottom: "12px" },
-  sizeStockCard: { display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", padding: "10px 8px", border: "1.5px solid", borderRadius: "10px", transition: "all 0.2s" },
-  sizeStockBadge: { fontSize: "13px", fontWeight: "800", color: "#001C40", background: "#e0e7ff", padding: "3px 12px", borderRadius: "6px", letterSpacing: "0.5px" },
-  sizeStockInput: { width: "100%", padding: "6px 4px", border: "1.5px solid #e5e7eb", borderRadius: "6px", fontSize: "16px", fontWeight: "700", textAlign: "center", outline: "none", fontFamily: "inherit", color: "#1a1a1a" },
-  totalStockBar: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px" },
+  sizeStockGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))",
+    gap: "10px",
+    marginBottom: "12px",
+  },
+  sizeStockCard: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "6px",
+    padding: "10px 8px",
+    border: "1.5px solid",
+    borderRadius: "10px",
+    transition: "all 0.2s",
+  },
+  sizeStockBadge: {
+    fontSize: "13px",
+    fontWeight: "800",
+    color: "#001C40",
+    background: "#e0e7ff",
+    padding: "3px 12px",
+    borderRadius: "6px",
+    letterSpacing: "0.5px",
+  },
+  sizeStockInput: {
+    width: "100%",
+    padding: "6px 4px",
+    border: "1.5px solid #e5e7eb",
+    borderRadius: "6px",
+    fontSize: "16px",
+    fontWeight: "700",
+    textAlign: "center",
+    outline: "none",
+    fontFamily: "inherit",
+    color: "#1a1a1a",
+  },
+  totalStockBar: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "10px 14px",
+    background: "#f0fdf4",
+    border: "1px solid #bbf7d0",
+    borderRadius: "8px",
+  },
   // Image section
-  mainPreviewWrap: { position: "relative", width: "100%", aspectRatio: "3/4", borderRadius: "10px", overflow: "hidden", marginBottom: "14px", background: "#f3f4f6" },
+  mainPreviewWrap: {
+    position: "relative",
+    width: "100%",
+    aspectRatio: "3/4",
+    borderRadius: "10px",
+    overflow: "hidden",
+    marginBottom: "14px",
+    background: "#f3f4f6",
+  },
   mainPreviewImg: { width: "100%", height: "100%", objectFit: "cover" },
-  addUrlBtn: { padding: "10px 16px", background: "#001C40", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "700", whiteSpace: "nowrap" },
-  dropZone: { border: "2px dashed", borderRadius: "10px", padding: "24px", textAlign: "center", cursor: "pointer", transition: "all 0.2s", display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" },
+  addUrlBtn: {
+    padding: "10px 16px",
+    background: "#001C40",
+    color: "#fff",
+    border: "none",
+    borderRadius: "8px",
+    cursor: "pointer",
+    fontSize: "13px",
+    fontWeight: "700",
+    whiteSpace: "nowrap",
+  },
+  dropZone: {
+    border: "2px dashed",
+    borderRadius: "10px",
+    padding: "24px",
+    textAlign: "center",
+    cursor: "pointer",
+    transition: "all 0.2s",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "8px",
+  },
   dropText: { fontSize: "13px", color: "#374151", margin: 0 },
-  chooseBtn: { display: "inline-block", padding: "8px 20px", background: "#001C40", color: "#fff", borderRadius: "8px", fontSize: "13px", fontWeight: "700", cursor: "pointer" },
+  chooseBtn: {
+    display: "inline-block",
+    padding: "8px 20px",
+    background: "#001C40",
+    color: "#fff",
+    borderRadius: "8px",
+    fontSize: "13px",
+    fontWeight: "700",
+    cursor: "pointer",
+  },
   dropHint: { fontSize: "11px", color: "#9ca3af", margin: 0 },
   imgList: { marginTop: "14px" },
-  imgListTitle: { fontSize: "12px", fontWeight: "700", color: "#374151", marginBottom: "10px" },
-  imgGrid: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" },
-  imgItem: { position: "relative", borderRadius: "8px", overflow: "hidden", aspectRatio: "3/4", background: "#f3f4f6" },
+  imgListTitle: {
+    fontSize: "12px",
+    fontWeight: "700",
+    color: "#374151",
+    marginBottom: "10px",
+  },
+  imgGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, 1fr)",
+    gap: "8px",
+  },
+  imgItem: {
+    position: "relative",
+    borderRadius: "8px",
+    overflow: "hidden",
+    aspectRatio: "3/4",
+    background: "#f3f4f6",
+  },
   imgThumb: { width: "100%", height: "100%", objectFit: "cover" },
-  badgeMain: { position: "absolute", top: "4px", left: "4px", fontSize: "13px", lineHeight: 1 },
-  badgeHover: { position: "absolute", top: "4px", left: "22px", fontSize: "13px", lineHeight: 1 },
-  imgActions: { position: "absolute", top: "4px", right: "4px", display: "flex", gap: "3px" },
-  setMainBtn: { width: "22px", height: "22px", background: "rgba(255,255,255,0.92)", border: "none", borderRadius: "4px", cursor: "pointer", fontSize: "11px", display: "flex", alignItems: "center", justifyContent: "center" },
-  setHoverBtn: { width: "22px", height: "22px", background: "rgba(237,233,254,0.95)", border: "none", borderRadius: "4px", cursor: "pointer", fontSize: "11px", display: "flex", alignItems: "center", justifyContent: "center" },
-  removeBtn: { width: "22px", height: "22px", background: "rgba(220,38,38,0.85)", color: "#fff", border: "none", borderRadius: "4px", cursor: "pointer", fontSize: "10px", fontWeight: "700", display: "flex", alignItems: "center", justifyContent: "center" },
-  colorTagSelect: { position: "absolute", bottom: 0, left: 0, right: 0, fontSize: "10px", border: "none", background: "rgba(0,0,0,0.55)", color: "#fff", padding: "3px 4px", cursor: "pointer", outline: "none", fontFamily: "inherit", textAlign: "center" },
+  badgeMain: {
+    position: "absolute",
+    top: "4px",
+    left: "4px",
+    fontSize: "13px",
+    lineHeight: 1,
+  },
+  badgeHover: {
+    position: "absolute",
+    top: "4px",
+    left: "22px",
+    fontSize: "13px",
+    lineHeight: 1,
+  },
+  imgActions: {
+    position: "absolute",
+    top: "4px",
+    right: "4px",
+    display: "flex",
+    gap: "3px",
+  },
+  setMainBtn: {
+    width: "22px",
+    height: "22px",
+    background: "rgba(255,255,255,0.92)",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+    fontSize: "11px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  setHoverBtn: {
+    width: "22px",
+    height: "22px",
+    background: "rgba(237,233,254,0.95)",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+    fontSize: "11px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  removeBtn: {
+    width: "22px",
+    height: "22px",
+    background: "rgba(220,38,38,0.85)",
+    color: "#fff",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+    fontSize: "10px",
+    fontWeight: "700",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  colorTagSelect: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    fontSize: "10px",
+    border: "none",
+    background: "rgba(0,0,0,0.55)",
+    color: "#fff",
+    padding: "3px 4px",
+    cursor: "pointer",
+    outline: "none",
+    fontFamily: "inherit",
+    textAlign: "center",
+  },
   // Actions
   actionRow: { display: "flex", gap: "12px" },
-  cancelBtn: { flex: 1, padding: "13px", background: "#f3f4f6", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "700", color: "#374151" },
-  saveBtn: { flex: 2, padding: "13px", background: "#001C40", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "700" },
+  cancelBtn: {
+    flex: 1,
+    padding: "13px",
+    background: "#f3f4f6",
+    border: "none",
+    borderRadius: "8px",
+    cursor: "pointer",
+    fontSize: "13px",
+    fontWeight: "700",
+    color: "#374151",
+  },
+  saveBtn: {
+    flex: 2,
+    padding: "13px",
+    background: "#001C40",
+    color: "#fff",
+    border: "none",
+    borderRadius: "8px",
+    cursor: "pointer",
+    fontSize: "13px",
+    fontWeight: "700",
+  },
 };
 
 export default AddProduct;
