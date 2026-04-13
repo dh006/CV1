@@ -1,0 +1,44 @@
+"use strict";
+module.exports = {
+  up: async (queryInterface, Sequelize) => {
+    await queryInterface.createTable("banner_details", {
+      id: {
+        allowNull: false,
+        autoIncrement: true,
+        primaryKey: true,
+        type: Sequelize.INTEGER,
+      },
+      // Liên kết tới bảng Products
+      product_id: {
+        type: Sequelize.INTEGER,
+        references: {
+          model: "products",
+          key: "id",
+        },
+        onUpdate: "CASCADE",
+        onDelete: "CASCADE",
+      },
+      // Liên kết tới bảng Banners
+      banner_id: {
+        type: Sequelize.INTEGER,
+        references: {
+          model: "banners",
+          key: "id",
+        },
+        onUpdate: "CASCADE",
+        onDelete: "CASCADE",
+      },
+      created_at: {
+        allowNull: false,
+        type: Sequelize.DATE,
+      },
+      updated_at: {
+        allowNull: false,
+        type: Sequelize.DATE,
+      },
+    });
+  },
+  down: async (queryInterface, Sequelize) => {
+    await queryInterface.dropTable("banner_details");
+  },
+};

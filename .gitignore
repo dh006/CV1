@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Environment files (KHÔNG commit lên GitHub)
+.env
+backend/.env
+frontend/.env
+
+# Build output
+frontend/dist/
+frontend/.vite/
+
+# Uploads (ảnh local — trên production dùng cloud storage)
+backend/uploads/*.jpg
+backend/uploads/*.jpeg
+backend/uploads/*.png
+backend/uploads/*.webp
+backend/uploads/*.gif
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
