@@ -9,7 +9,7 @@ import { AuthProvider } from "./context/AuthContext";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <BrowserRouter basename="/CV1">
+    <BrowserRouter basename="/DIEPCOLLECTION">
       <AuthProvider>
         <CartProvider>
           <App />

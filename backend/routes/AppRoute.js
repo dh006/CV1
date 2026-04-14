@@ -18,7 +18,11 @@ const voucher = require("../controllers/voucherController");
 const momo = require("../controllers/momoController");
 
 // Middlewares
-const { verifyToken, isAdmin, isStaff } = require("../middlewares/authMiddleware");
+const {
+  verifyToken,
+  isAdmin,
+  isStaff,
+} = require("../middlewares/authMiddleware");
 const upload = require("../middlewares/uploadMiddleware");
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -63,7 +67,11 @@ router.post("/orders", verifyToken, order.createOrder);
 router.get("/my-orders/user/me", verifyToken, order.getMyOrdersByUser);
 router.put("/my-orders/:id/cancel", verifyToken, order.cancelOrder);
 // User xác nhận đã chuyển khoản
-router.put("/my-orders/:orderCode/confirm-paid", verifyToken, order.confirmPaid);
+router.put(
+  "/my-orders/:orderCode/confirm-paid",
+  verifyToken,
+  order.confirmPaid,
+);
 router.get("/my-orders/:phone", verifyToken, order.getMyOrders);
 router.post("/feedbacks", verifyToken, feedback.create);
 
@@ -83,16 +91,32 @@ router.put("/admin/users/:id", [verifyToken, isAdmin], admin.updateUser);
 router.delete("/admin/users/:id", [verifyToken, isAdmin], admin.deleteUser);
 
 // Products
-router.post("/admin/products", [verifyToken, isAdmin, upload.array("images", 10)], product.create);
-router.put("/admin/products/:id", [verifyToken, isAdmin, upload.array("images", 10)], product.update);
+router.post(
+  "/admin/products",
+  [verifyToken, isAdmin, upload.array("images", 10)],
+  product.create,
+);
+router.put(
+  "/admin/products/:id",
+  [verifyToken, isAdmin, upload.array("images", 10)],
+  product.update,
+);
 router.delete("/admin/products/:id", [verifyToken, isAdmin], product.delete);
 
 // Orders
 router.get("/admin/orders", [verifyToken, isStaff], order.getAll);
 router.get("/admin/orders/:id", [verifyToken, isStaff], order.getById);
 router.put("/admin/orders/:id", [verifyToken, isStaff], order.updateStatus);
-router.get("/admin/order-details/:orderId", [verifyToken, isStaff], orderDetail.getByOrder);
-router.delete("/admin/order-details/:id", [verifyToken, isAdmin], orderDetail.delete);
+router.get(
+  "/admin/order-details/:orderId",
+  [verifyToken, isStaff],
+  orderDetail.getByOrder,
+);
+router.delete(
+  "/admin/order-details/:id",
+  [verifyToken, isAdmin],
+  orderDetail.delete,
+);
 
 // Categories
 router.post("/admin/categories", [verifyToken, isAdmin], category.create);
@@ -114,20 +138,39 @@ router.put("/admin/vouchers/:id", [verifyToken, isAdmin], voucher.update);
 router.delete("/admin/vouchers/:id", [verifyToken, isAdmin], voucher.delete);
 
 // News
-router.post("/admin/news", [verifyToken, isAdmin, upload.single("image")], news.create);
-router.put("/admin/news/:id", [verifyToken, isAdmin, upload.single("image")], news.update);
+router.post(
+  "/admin/news",
+  [verifyToken, isAdmin, upload.single("image")],
+  news.create,
+);
+router.put(
+  "/admin/news/:id",
+  [verifyToken, isAdmin, upload.single("image")],
+  news.update,
+);
 router.delete("/admin/news/:id", [verifyToken, isAdmin], news.delete);
 
 // Banners
-router.post("/admin/banners", [verifyToken, isAdmin, upload.single("image")], banner.create);
-router.put("/admin/banners/:id", [verifyToken, isAdmin, upload.single("image")], banner.update);
+router.post(
+  "/admin/banners",
+  [verifyToken, isAdmin, upload.single("image")],
+  banner.create,
+);
+router.put(
+  "/admin/banners/:id",
+  [verifyToken, isAdmin, upload.single("image")],
+  banner.update,
+);
 router.delete("/admin/banners/:id", [verifyToken, isAdmin], banner.delete);
 
 // ════════════════════════════════════════════════════════════════════════════
 // HEALTH CHECK
 // ════════════════════════════════════════════════════════════════════════════
 router.get("/test", (req, res) =>
-  res.json({ message: "✅ DIEP COLLECTION API đang hoạt động!", time: new Date() })
+  res.json({
+    message: "✅ DIEP COLLECTION API đang hoạt động!",
+    time: new Date(),
+  }),
 );
 
 module.exports = router;

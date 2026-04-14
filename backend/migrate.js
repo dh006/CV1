@@ -17,16 +17,16 @@ const run = async () => {
     console.log("Cột hiện tại:", Object.keys(cols).join(", "));
 
     const toAdd = [
-      { name: "gallery",  type: "TEXT",         after: "image" },
-      { name: "label",    type: "VARCHAR(50)",   after: "gallery" },
-      { name: "sizes",    type: "VARCHAR(255)",  after: "label" },
-      { name: "colors",   type: "VARCHAR(255)",  after: "sizes" },
+      { name: "gallery", type: "TEXT", after: "image" },
+      { name: "label", type: "VARCHAR(50)", after: "gallery" },
+      { name: "sizes", type: "VARCHAR(255)", after: "label" },
+      { name: "colors", type: "VARCHAR(255)", after: "sizes" },
     ];
 
     for (const col of toAdd) {
       if (!cols[col.name]) {
         await sequelize.query(
-          `ALTER TABLE Products ADD COLUMN \`${col.name}\` ${col.type} NULL AFTER \`${col.after}\``
+          `ALTER TABLE Products ADD COLUMN \`${col.name}\` ${col.type} NULL AFTER \`${col.after}\``,
         );
         console.log(`✅ Đã thêm cột: ${col.name}`);
       } else {

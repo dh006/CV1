@@ -26,7 +26,7 @@ app.use(
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "x-access-token", "Authorization"],
     credentials: true,
-  })
+  }),
 );
 
 // ── Body parsers ──────────────────────────────────────────────────────────────
@@ -43,12 +43,14 @@ app.use("/api", appRoutes);
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get("/health", (req, res) =>
-  res.json({ status: "ok", time: new Date().toISOString() })
+  res.json({ status: "ok", time: new Date().toISOString() }),
 );
 
 // ── 404 handler ───────────────────────────────────────────────────────────────
 app.use((req, res) =>
-  res.status(404).json({ message: `Route ${req.method} ${req.path} không tồn tại` })
+  res
+    .status(404)
+    .json({ message: `Route ${req.method} ${req.path} không tồn tại` }),
 );
 
 // ── Global error handler ──────────────────────────────────────────────────────

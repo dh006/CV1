@@ -132,10 +132,10 @@ const AdminLayout = () => {
             <span style={s.pageTitle}>{pageLabel}</span>
           </div>
           <div style={s.topbarRight}>
-            <Link to="/" target="_blank" style={s.viewSiteBtn}>
+            <a href="http://localhost:5173" target="_blank" rel="noopener noreferrer" style={s.viewSiteBtn}>
               <i className="fa-solid fa-arrow-up-right-from-square" style={{ marginRight: "6px", fontSize: "11px" }} />
               Xem website bán hàng
-            </Link>
+            </a>
 
             <div style={s.userChip}>
               <div style={s.userAvatar}>{initial}</div>
