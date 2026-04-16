@@ -94,6 +94,9 @@ const Footer = () => {
                 <Link to="/he-thong-cua-hang" style={s.link}>🏪 Hệ thống cửa hàng</Link>
               </li>
               <li>
+                <Link to="/gioi-thieu" style={s.link}>ℹ️ Giới thiệu về chúng tôi</Link>
+              </li>
+              <li>
                 <Link to="/news" style={s.link}>📰 Tin tức & Xu hướng</Link>
               </li>
               <li>

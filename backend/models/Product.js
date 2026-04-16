@@ -15,10 +15,13 @@ const Product = sequelize.define(
     sizes: { type: DataTypes.STRING }, // JSON: '["S","M","L","XL"]'
     colors: { type: DataTypes.STRING }, // JSON: '["Đen","Trắng"]'
     sizeStock: { type: DataTypes.TEXT }, // JSON: '{"S":10,"M":20,"L":5}' — tồn kho theo size
+    colorImages: { type: DataTypes.TEXT }, // JSON: '{"Đen":"/uploads/abc.jpg","Trắng":"https://..."}' — ảnh theo màu
+    hoverImage: { type: DataTypes.TEXT }, // URL ảnh hover (hiện khi hover trên card)
     buyTurn: { type: DataTypes.INTEGER, defaultValue: 0 },
     quantity: { type: DataTypes.INTEGER, allowNull: false }, // tổng tồn kho (tự tính từ sizeStock)
     brandId: { type: DataTypes.INTEGER },
     categoryId: { type: DataTypes.INTEGER },
+    sizeGuide: { type: DataTypes.TEXT }, // URL ảnh hướng dẫn chọn size
   },
   { tableName: "Products" },
 );

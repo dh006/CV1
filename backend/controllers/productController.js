@@ -32,8 +32,20 @@ exports.getAll = async (req, res) => {
       offset,
     });
 
+    // Tự động fill hoverImage từ gallery[0] nếu chưa có
+    const data = rows.map((p) => {
+      const obj = p.toJSON();
+      if (!obj.hoverImage && obj.gallery) {
+        try {
+          const gallery = JSON.parse(obj.gallery);
+          if (gallery[0]) obj.hoverImage = gallery[0];
+        } catch {}
+      }
+      return obj;
+    });
+
     res.json({
-      data: rows,
+      data,
       total: count,
       page: Number(page),
       totalPages: Math.ceil(count / Number(limit)),
@@ -53,7 +65,17 @@ exports.getById = async (req, res) => {
       ],
     });
     if (!product) return res.status(404).json({ message: "Không tìm thấy sản phẩm!" });
-    res.json(product);
+
+    const obj = product.toJSON();
+    // Tự động fill hoverImage từ gallery[0] nếu chưa có
+    if (!obj.hoverImage && obj.gallery) {
+      try {
+        const gallery = JSON.parse(obj.gallery);
+        if (gallery[0]) obj.hoverImage = gallery[0];
+      } catch {}
+    }
+
+    res.json(obj);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -87,6 +109,29 @@ exports.create = async (req, res) => {
       if (allImages.length > 1) {
         data.gallery = JSON.stringify(allImages.slice(1));
       }
+    }
+
+    // Xây dựng colorImages map từ colorImageIndex nếu có
+    // colorImageIndex: { "Đen": 0, "Trắng": 1, ... } — index trong allImages
+    if (data.colorImageIndex) {
+      try {
+        const indexMap = JSON.parse(data.colorImageIndex);
+        const colorImagesMap = {};
+        Object.entries(indexMap).forEach(([color, idx]) => {
+          if (allImages[idx]) colorImagesMap[color] = allImages[idx];
+        });
+        data.colorImages = JSON.stringify(colorImagesMap);
+      } catch { /* bỏ qua nếu parse lỗi */ }
+      delete data.colorImageIndex;
+    }
+
+    // Lưu hoverImage từ hoverImageIndex
+    if (data.hoverImageIndex !== undefined) {
+      const hIdx = Number(data.hoverImageIndex);
+      if (!isNaN(hIdx) && allImages[hIdx]) {
+        data.hoverImage = allImages[hIdx];
+      }
+      delete data.hoverImageIndex;
     }
 
     // Xử lý sizeStock — tính tổng quantity từ sizeStock nếu có
@@ -158,6 +203,28 @@ exports.update = async (req, res) => {
       }
       data.image = allImages[0];
       data.gallery = allImages.length > 1 ? JSON.stringify(allImages.slice(1)) : null;
+    }
+
+    // Xây dựng colorImages map từ colorImageIndex nếu có
+    if (data.colorImageIndex) {
+      try {
+        const indexMap = JSON.parse(data.colorImageIndex);
+        const colorImagesMap = {};
+        Object.entries(indexMap).forEach(([color, idx]) => {
+          if (allImages[idx]) colorImagesMap[color] = allImages[idx];
+        });
+        data.colorImages = JSON.stringify(colorImagesMap);
+      } catch { /* bỏ qua */ }
+      delete data.colorImageIndex;
+    }
+
+    // Lưu hoverImage từ hoverImageIndex
+    if (data.hoverImageIndex !== undefined) {
+      const hIdx = Number(data.hoverImageIndex);
+      if (!isNaN(hIdx) && allImages[hIdx]) {
+        data.hoverImage = allImages[hIdx];
+      }
+      delete data.hoverImageIndex;
     }
 
     // Xử lý sizeStock — tính tổng quantity từ sizeStock nếu có

@@ -188,8 +188,8 @@ a:hover {
 /* ================= PRODUCT DETAIL RESPONSIVE ================= */
 .product-detail-layout {
   display: grid;
-  grid-template-columns: 1.3fr 1fr;
-  gap: 48px;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 56px;
   align-items: start;
 }
 
@@ -205,18 +205,17 @@ a:hover {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  width: 72px;
+  width: 76px;
   flex-shrink: 0;
-  max-height: 580px;
-  overflow-y: auto;
-  scrollbar-width: thin;
+  max-height: none;
+  overflow-y: visible;
 }
 
 .product-detail-main-img {
   flex: 1;
   position: relative;
   aspect-ratio: 3/4;
-  max-height: 580px;
+  max-height: none;
   background: #f5f5f5;
   border-radius: 10px;
   overflow: hidden;

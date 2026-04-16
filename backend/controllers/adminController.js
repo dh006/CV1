@@ -6,6 +6,29 @@ const { Op } = require("sequelize");
 // ── Dashboard Stats ───────────────────────────────────────────────────────────
 exports.getDashboardStats = async (req, res) => {
   try {
+    // Nhận filter ngày từ query: ?from=2026-01-01&to=2026-01-31
+    const { from, to } = req.query;
+
+    // Xác định khoảng thời gian
+    const now = new Date();
+    let startDate, endDate;
+
+    if (from && to) {
+      startDate = new Date(from);
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date(to);
+      endDate.setHours(23, 59, 59, 999);
+    } else {
+      // Mặc định: 7 ngày gần nhất
+      startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date(now);
+      endDate.setHours(23, 59, 59, 999);
+    }
+
+    const dateFilter = { createdAt: { [Op.between]: [startDate, endDate] } };
+    const completedFilter = { status: 2, ...dateFilter };
+
     const [
       totalRevenue,
       orderCount,
@@ -16,46 +39,44 @@ exports.getDashboardStats = async (req, res) => {
       topProducts,
       revenueByDay,
     ] = await Promise.all([
-      // Tổng doanh thu đơn hoàn thành
-      Order.sum("totalPrice", { where: { status: 2 } }).then((v) => v || 0),
+      // Tổng doanh thu đơn hoàn thành trong khoảng thời gian
+      Order.sum("totalPrice", { where: completedFilter }).then((v) => v || 0),
 
-      // Tổng đơn hàng
-      Order.count(),
+      // Tổng đơn hàng trong khoảng thời gian
+      Order.count({ where: dateFilter }),
 
-      // Tổng sản phẩm
+      // Tổng sản phẩm (không filter theo ngày)
       Product.count(),
 
-      // Tổng người dùng
+      // Tổng người dùng (không filter theo ngày)
       User.count(),
 
-      // Đơn chờ xử lý
-      Order.count({ where: { status: 0 } }),
+      // Đơn chờ xử lý trong khoảng thời gian
+      Order.count({ where: { status: 0, ...dateFilter } }),
 
-      // 5 đơn hàng gần nhất
+      // 5 đơn hàng gần nhất trong khoảng thời gian
       Order.findAll({
+        where: dateFilter,
         order: [["createdAt", "DESC"]],
         limit: 5,
         attributes: ["id", "orderCode", "fullName", "phone", "totalPrice", "status", "createdAt"],
       }),
 
-      // Top 5 sản phẩm bán chạy
+      // Top 5 sản phẩm bán chạy (không filter theo ngày)
       Product.findAll({
         order: [["buyTurn", "DESC"]],
         limit: 5,
         attributes: ["id", "name", "price", "buyTurn", "image", "quantity"],
       }),
 
-      // Doanh thu 7 ngày gần nhất
+      // Doanh thu theo ngày trong khoảng thời gian
       Order.findAll({
         attributes: [
           [sequelize.fn("DATE", sequelize.col("createdAt")), "day"],
           [sequelize.fn("SUM", sequelize.col("totalPrice")), "revenue"],
           [sequelize.fn("COUNT", sequelize.col("id")), "orders"],
         ],
-        where: {
-          status: 2,
-          createdAt: { [Op.gte]: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
-        },
+        where: completedFilter,
         group: [sequelize.fn("DATE", sequelize.col("createdAt"))],
         order: [[sequelize.fn("DATE", sequelize.col("createdAt")), "ASC"]],
       }),
@@ -72,6 +93,10 @@ exports.getDashboardStats = async (req, res) => {
       recentOrders,
       topProducts,
       revenueByDay,
+      filter: {
+        from: startDate.toISOString().slice(0, 10),
+        to: endDate.toISOString().slice(0, 10),
+      },
     });
   } catch (error) {
     console.error("Lỗi Dashboard Stats:", error);

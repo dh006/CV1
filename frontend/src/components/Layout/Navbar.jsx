@@ -476,7 +476,7 @@ const Navbar = () => {
                       <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400" alt="Autumn" style={styles.promoImg} />
                       <span style={styles.imageText}>Đồ Thu Đông</span>
                     </Link>
-                    <Link to="/collections/retro-sports" style={styles.imageWrapper}>
+                    <Link to="/gioi-thieu" style={styles.imageWrapper}>
                       <img src="https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?w=400" alt="Sports" style={styles.promoImg} />
                       <span style={styles.imageText}>Retro Sports</span>
                     </Link>
@@ -583,6 +583,7 @@ const Navbar = () => {
                   </div>
                   <div style={styles.collectionFooter}>
                     <Link to="/collections" style={styles.viewAllBtn}>Xem tất cả →</Link>
+                    <Link to="/gioi-thieu" style={{ ...styles.viewAllBtn, background: "#001C40", color: "#fff", border: "none", marginLeft: "10px" }}>Về DIEP COLLECTION</Link>
                   </div>
                 </div>
               </div>

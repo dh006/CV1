@@ -114,7 +114,7 @@ const EditProduct = () => {
     e.preventDefault();
     setSaving(true);
     const formData = new FormData();
-    ["name", "price", "oldPrice", "quantity", "categoryId", "brandId", "description", "label", "sizes", "colors"].forEach((k) => {
+    ["name", "price", "oldPrice", "quantity", "categoryId", "brandId", "description", "label", "sizes", "colors", "sizeGuide"].forEach((k) => {
       if (product[k] !== undefined && product[k] !== null) formData.append(k, product[k]);
     });
     // Gửi sizeStock
@@ -326,6 +326,21 @@ const EditProduct = () => {
               <textarea style={{ ...s.input, minHeight: "100px", resize: "vertical" }}
                 value={product.description || ""}
                 onChange={(e) => setProduct({ ...product, description: e.target.value })} />
+            </div>
+
+            <div style={s.group}>
+              <label style={s.label}>
+                <i className="fa-solid fa-ruler" style={{ marginRight: "6px", color: "#6b7280" }} />
+                Ảnh hướng dẫn chọn size (URL)
+              </label>
+              <input style={s.input} type="text"
+                placeholder="Dán link ảnh bảng size..."
+                value={product.sizeGuide || ""}
+                onChange={(e) => setProduct({ ...product, sizeGuide: e.target.value })} />
+              <p style={{ fontSize: "11px", color: "#9ca3af", marginTop: "4px" }}>
+                <i className="fa-solid fa-circle-info" style={{ marginRight: "4px" }} />
+                Ảnh này hiện khi user click "Hướng dẫn chọn size"
+              </p>
             </div>
           </div>
         </div>

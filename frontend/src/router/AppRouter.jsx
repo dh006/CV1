@@ -78,6 +78,9 @@ import AdminBrands from "../pages/admin/Brands/AdminBrands";
 import AdminBanners from "../pages/admin/Banners/AdminBanners";
 import AdminNews from "../pages/admin/News/AdminNews";
 
+import AboutPage from "../pages/user/About/AboutPage";
+import RetroSportsPage from "../pages/user/Collection/RetroSportsPage";
+import SnoopyPage from "../pages/user/Collection/SnoopyPage";
 import AdminVouchers from "../pages/admin/Vouchers/AdminVouchers";
 const AdminIndexRedirect = () => {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -126,6 +129,9 @@ const AppRouter = () => {
           <Route path="profile" element={<ProfilePage />} />
           <Route path="my-orders" element={<ProfilePage />} />
           <Route path="he-thong-cua-hang" element={<StoreLocations />} />
+          <Route path="gioi-thieu" element={<AboutPage />} />
+          <Route path="collections/retro-sports" element={<RetroSportsPage />} />
+          <Route path="collections/snoopy" element={<SnoopyPage />} />
           <Route path="news" element={<NewsPage />} />
           <Route path="zalopay-nhan-tien" element={<ZaloPayReceiveMoney />} />
 

@@ -78,6 +78,7 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState("description");
   const [zoomImg, setZoomImg] = useState(false);
+  const [showSizeGuide, setShowSizeGuide] = useState(false);
 
   // Feedbacks
   const [feedbacks, setFeedbacks] = useState([]);
@@ -151,8 +152,21 @@ const ProductDetail = () => {
       .filter((v, i, a) => a.indexOf(v) === i);
   }, [product]);
 
-  // Map màu → ảnh: màu[0] → product_images[0], màu[1] → product_images[1], ...
+  // Map màu → ảnh: ưu tiên colorImages từ DB, fallback về index-based
   const colorImageMap = useMemo(() => {
+    // Thử đọc colorImages từ DB (JSON map chính xác)
+    if (product?.colorImages) {
+      try {
+        const map = JSON.parse(product.colorImages);
+        // Resolve URL cho các path local
+        const resolved = {};
+        Object.entries(map).forEach(([c, img]) => {
+          resolved[c] = img ? getImgUrl(img) : null;
+        });
+        return resolved;
+      } catch {}
+    }
+    // Fallback: map theo index (cũ)
     const map = {};
     const colorList = parseList(product?.colors) || [];
     colorList.forEach((c, i) => {
@@ -161,7 +175,8 @@ const ProductDetail = () => {
     return map;
   }, [product, product_images]);
 
-  const sizes = useMemo(() => parseList(product?.sizes) || ["S", "M", "L", "XL", "2XL"], [product]);
+  const sizes = useMemo(() => parseList(product?.sizes) || [], [product]);
+  const hasSizes = sizes.length > 0;
   const colors = useMemo(() => parseList(product?.colors) || [], [product]);
   const sizeStock = useMemo(() => {
     if (!product?.sizeStock) return {};
@@ -215,14 +230,14 @@ const ProductDetail = () => {
 
   const handleAddToCart = () => {
     if (isOutOfStock) return;
-    if (!selectedSize) { alert("Vui lòng chọn kích thước!"); return; }
-    addToCart({ ...product, image: getImgUrl(product.image), size: selectedSize, color: selectedColor, quantity });
+    if (hasSizes && !selectedSize) { alert("Vui lòng chọn kích thước!"); return; }
+    addToCart({ ...product, image: getImgUrl(product.image), size: selectedSize || "", color: selectedColor, quantity });
   };
 
   const handleBuyNow = () => {
     if (isOutOfStock) return;
-    if (!selectedSize) { alert("Vui lòng chọn kích thước!"); return; }
-    addToCart({ ...product, image: getImgUrl(product.image), size: selectedSize, color: selectedColor, quantity });
+    if (hasSizes && !selectedSize) { alert("Vui lòng chọn kích thước!"); return; }
+    addToCart({ ...product, image: getImgUrl(product.image), size: selectedSize || "", color: selectedColor, quantity });
     navigate("/cart");
   };
 
@@ -271,7 +286,7 @@ const ProductDetail = () => {
               ))}
             </div>
           )}
-          {/* Ảnh chính */}
+          {/* Ảnh chính + nút prev/next */}
           <div className="product-detail-main-img" onClick={() => setZoomImg(!zoomImg)}>
             <img
               src={mainImage || product_images[0]}
@@ -286,6 +301,50 @@ const ProductDetail = () => {
               </div>
             )}
             <i className="fa-solid fa-magnifying-glass-plus" style={{ position: "absolute", bottom: "10px", right: "10px", fontSize: "16px", opacity: 0.4, color: "#111" }} />
+
+            {/* Nút Prev / Next */}
+            {product_images.length > 1 && (() => {
+              const curIdx = product_images.indexOf(mainImage);
+              const hasPrev = curIdx > 0;
+              const hasNext = curIdx < product_images.length - 1;
+              const navBtn = (dir) => ({
+                position: "absolute", top: "50%", transform: "translateY(-50%)",
+                [dir === "prev" ? "left" : "right"]: "10px",
+                zIndex: 5, background: "rgba(255,255,255,0.88)",
+                border: "none", borderRadius: "50%",
+                width: "36px", height: "36px",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                transition: "background 0.2s",
+                opacity: dir === "prev" ? (hasPrev ? 1 : 0.3) : (hasNext ? 1 : 0.3),
+              });
+              return (
+                <>
+                  <button
+                    style={navBtn("prev")}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (hasPrev) setMainImage(product_images[curIdx - 1]);
+                    }}
+                  >
+                    <i className="fa-solid fa-chevron-left" style={{ fontSize: "13px", color: "#111" }} />
+                  </button>
+                  <button
+                    style={navBtn("next")}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (hasNext) setMainImage(product_images[curIdx + 1]);
+                    }}
+                  >
+                    <i className="fa-solid fa-chevron-right" style={{ fontSize: "13px", color: "#111" }} />
+                  </button>
+                  {/* Chỉ số ảnh */}
+                  <div style={{ position: "absolute", bottom: "10px", left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.45)", color: "#fff", fontSize: "11px", fontWeight: "600", padding: "3px 10px", borderRadius: "999px", zIndex: 5, letterSpacing: "0.5px" }}>
+                    {curIdx + 1} / {product_images.length}
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </div>
 
@@ -342,24 +401,46 @@ const ProductDetail = () => {
               </p>
               <div style={s.colorRow}>
                 {colors.map((c) => {
+                  const isSelected = selectedColor === c;
+                  const thumbImg = colorImageMap[c];
                   const hex = getColorHex(c);
                   const isLight = ["#f5f5f5", "#fef3c7", "#d4b896"].includes(hex);
-                  const isSelected = selectedColor === c;
                   return (
                     <button
                       key={c}
                       onClick={() => handleColorSelect(c)}
                       title={c}
                       style={{
-                        ...s.colorSwatch,
-                        background: hex,
-                        border: isSelected ? "2.5px solid #1a1a1a" : isLight ? "1.5px solid #d1d5db" : "1.5px solid transparent",
+                        width: "52px", height: "52px",
+                        borderRadius: "50%",
+                        padding: 0,
+                        overflow: "hidden",
+                        cursor: "pointer",
+                        flexShrink: 0,
+                        border: isSelected ? "2.5px solid #1a1a1a" : "1.5px solid #e5e7eb",
                         boxShadow: isSelected ? "0 0 0 3px rgba(0,0,0,0.15)" : "none",
-                        transform: isSelected ? "scale(1.15)" : "scale(1)",
+                        transform: isSelected ? "scale(1.12)" : "scale(1)",
+                        transition: "all 0.2s",
+                        background: thumbImg ? "transparent" : hex,
+                        position: "relative",
                       }}
                     >
-                      {isSelected && (
-                        <span style={{ color: isLight ? "#1a1a1a" : "#fff", fontSize: "12px", fontWeight: "900", lineHeight: 1 }}>✓</span>
+                      {thumbImg ? (
+                        <img
+                          src={thumbImg}
+                          alt={c}
+                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                          onError={(e) => { e.target.style.display = "none"; e.target.parentNode.style.background = hex; }}
+                        />
+                      ) : (
+                        isSelected && (
+                          <span style={{ color: isLight ? "#1a1a1a" : "#fff", fontSize: "12px", fontWeight: "900", lineHeight: 1 }}>✓</span>
+                        )
+                      )}
+                      {isSelected && thumbImg && (
+                        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.18)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <i className="fa-solid fa-check" style={{ color: "#fff", fontSize: "14px", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.5))" }} />
+                        </div>
                       )}
                     </button>
                   );
@@ -368,11 +449,19 @@ const ProductDetail = () => {
             </div>
           )}
 
-          {/* Size */}
+          {/* Size — chỉ hiện khi sản phẩm có size */}
+          {hasSizes && (
           <div style={s.optGroup}>
             <div style={s.optLabelRow}>
               <p style={s.optLabel}>KÍCH THƯỚC: <strong>{selectedSize || "Chưa chọn"}</strong></p>
-              <span style={s.sizeGuide}>Hướng dẫn chọn size</span>
+              <span
+                style={{ ...s.sizeGuide, color: product.sizeGuide ? "#001C40" : "#888" }}
+                onClick={() => product.sizeGuide && setShowSizeGuide(true)}
+                title={product.sizeGuide ? "Xem bảng size" : "Chưa có bảng size"}
+              >
+                <i className="fa-solid fa-ruler" style={{ marginRight: "4px" }} />
+                Hướng dẫn chọn size
+              </span>
             </div>
             <div style={s.sizeRow}>
               {sizes.map((sz) => {
@@ -414,6 +503,7 @@ const ProductDetail = () => {
               </p>
             )}
           </div>
+          )}
 
           {/* Số lượng + Thêm giỏ */}
           {!isOutOfStock ? (
@@ -554,12 +644,47 @@ const ProductDetail = () => {
           </div>
         </div>
       )}
+
+      {/* ═══ SIZE GUIDE MODAL ═══ */}
+      {showSizeGuide && product.sizeGuide && (
+        <div
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 99999, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}
+          onClick={() => setShowSizeGuide(false)}
+        >
+          <div
+            style={{ background: "#fff", borderRadius: "14px", padding: "24px", maxWidth: "700px", width: "100%", maxHeight: "90vh", overflowY: "auto", position: "relative", boxShadow: "0 24px 60px rgba(0,0,0,0.3)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <h3 style={{ fontSize: "16px", fontWeight: "800", color: "#111", margin: 0 }}>
+                <i className="fa-solid fa-ruler" style={{ marginRight: "8px", color: "#001C40" }} />
+                Hướng dẫn chọn size
+              </h3>
+              <button
+                onClick={() => setShowSizeGuide(false)}
+                style={{ background: "#f3f4f6", border: "none", borderRadius: "50%", width: "34px", height: "34px", cursor: "pointer", fontSize: "16px", color: "#555", display: "flex", alignItems: "center", justifyContent: "center" }}
+              >
+                <i className="fa-solid fa-xmark" />
+              </button>
+            </div>
+            <img
+              src={product.sizeGuide}
+              alt="Bảng hướng dẫn chọn size"
+              style={{ width: "100%", borderRadius: "8px", display: "block" }}
+              onError={(e) => { e.target.style.display = "none"; e.target.nextSibling.style.display = "block"; }}
+            />
+            <p style={{ display: "none", textAlign: "center", color: "#9ca3af", padding: "40px 0", fontSize: "14px" }}>
+              Không tải được ảnh. Vui lòng thử lại.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 const s = {
-  page: { maxWidth: "1280px", margin: "0 auto", padding: "28px 20px 60px", fontFamily: "'Inter',sans-serif", background: "#fff" },
+  page: { maxWidth: "1400px", margin: "0 auto", padding: "28px 24px 60px", fontFamily: "'Inter',sans-serif", background: "#fff" },
   breadcrumb: { display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "#aaa", marginBottom: "28px", flexWrap: "wrap" },
   breadLink: { textDecoration: "none", color: "#aaa" },
   sep: { color: "#ddd" },

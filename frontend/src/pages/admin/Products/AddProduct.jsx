@@ -60,6 +60,7 @@ const AddProduct = () => {
     label: "",
     sizes: "S,M,L,XL,2XL",
     colors: "",
+    sizeGuide: "",
   });
 
   // Mỗi ảnh: { file, preview, isUrl, colorTag }
@@ -68,13 +69,7 @@ const AddProduct = () => {
   const [urlInput, setUrlInput] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const [colorList, setColorList] = useState([]);
-  const [sizeStockMap, setSizeStockMap] = useState({
-    S: 0,
-    M: 0,
-    L: 0,
-    XL: 0,
-    "2XL": 0,
-  });
+  const [sizeStockMap, setSizeStockMap] = useState({ S: 0, M: 0, L: 0, XL: 0, "2XL": 0 });
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -100,15 +95,14 @@ const AddProduct = () => {
 
   const handleSizesChange = (val) => {
     setProduct((prev) => ({ ...prev, sizes: val }));
-    const list = val
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
+    const list = val.split(",").map((s) => s.trim()).filter(Boolean);
+    if (list.length === 0) {
+      setSizeStockMap({}); // Không có size → xóa sizeStock
+      return;
+    }
     setSizeStockMap((prev) => {
       const next = {};
-      list.forEach((sz) => {
-        next[sz] = prev[sz] ?? 0;
-      });
+      list.forEach((sz) => { next[sz] = prev[sz] ?? 0; });
       return next;
     });
   };
@@ -229,10 +223,14 @@ const AddProduct = () => {
     });
     if (Object.keys(sizeStockMap).length > 0) {
       formData.append("sizeStock", JSON.stringify(sizeStockMap));
+      formData.set("quantity", String(totalStock));
     }
 
-    // Sắp xếp: nếu có colorTag → sắp theo thứ tự colorList
-    // Ảnh main đứng đầu, hover thứ 2, còn lại theo sau
+    // Sắp xếp ảnh: main đứng đầu (index 0 = ảnh đại diện), hover đứng thứ 2 (index 1 = ảnh hover)
+    // Các ảnh còn lại sắp theo thứ tự màu
+    const mainImg = images.find((img) => img.isMain) || images[0];
+    const hoverImg = images.find((img) => img.isHover && !img.isMain);
+
     let sorted;
     if (colorList.length > 0 && images.some((img) => img.colorTag)) {
       // Sắp theo thứ tự màu
@@ -242,12 +240,32 @@ const AddProduct = () => {
       });
       const colorOrdered = colorList.map((c) => byColor[c]).filter(Boolean);
       const untagged = images.filter((img) => !img.colorTag);
-      sorted = [...colorOrdered, ...untagged];
+      const allByColor = [...colorOrdered, ...untagged];
+
+      // main đứng đầu, hover đứng thứ 2, còn lại theo màu
+      const rest = allByColor.filter((img) => img !== mainImg && img !== hoverImg);
+      sorted = [mainImg, ...(hoverImg ? [hoverImg] : []), ...rest];
+
+      // Gửi colorImageIndex dựa trên vị trí trong sorted
+      const colorIndexMap = {};
+      colorList.forEach((c) => {
+        const img = images.find((i) => i.colorTag === c);
+        if (img) {
+          const idx = sorted.indexOf(img);
+          if (idx !== -1) colorIndexMap[c] = idx;
+        }
+      });
+      formData.append("colorImageIndex", JSON.stringify(colorIndexMap));
     } else {
-      const mainImg = images.find((img) => img.isMain) || images[0];
-      const hoverImg = images.find((img) => img.isHover && !img.isMain);
+      // Không có màu → main, hover, còn lại
       const rest = images.filter((img) => img !== mainImg && img !== hoverImg);
       sorted = [mainImg, ...(hoverImg ? [hoverImg] : []), ...rest];
+    }
+
+    // Gửi hoverImageIndex để backend biết ảnh nào là hover
+    if (hoverImg) {
+      const hoverIdx = sorted.indexOf(hoverImg);
+      if (hoverIdx !== -1) formData.append("hoverImageIndex", String(hoverIdx));
     }
 
     const fileImgs = [];
@@ -344,19 +362,12 @@ const AddProduct = () => {
                 <input
                   style={{
                     ...s.input,
-                    background:
-                      Object.keys(sizeStockMap).length > 0
-                        ? "#f3f4f6"
-                        : "#fafafa",
-                    color: "#6b7280",
+                    background: Object.keys(sizeStockMap).length > 0 ? "#f3f4f6" : "#fafafa",
+                    color: Object.keys(sizeStockMap).length > 0 ? "#6b7280" : "#1a1a1a",
                   }}
                   type="number"
-                  placeholder="Tự tính từ tồn kho theo size"
-                  value={
-                    Object.keys(sizeStockMap).length > 0
-                      ? totalStock
-                      : product.quantity
-                  }
+                  placeholder={Object.keys(sizeStockMap).length > 0 ? "Tự tính từ size" : "Nhập số lượng"}
+                  value={Object.keys(sizeStockMap).length > 0 ? totalStock : product.quantity}
                   onChange={(e) =>
                     Object.keys(sizeStockMap).length === 0 &&
                     setProduct({ ...product, quantity: e.target.value })
@@ -512,10 +523,14 @@ const AddProduct = () => {
                 <input
                   style={s.input}
                   type="text"
-                  placeholder="S,M,L,XL,2XL"
+                  placeholder="S,M,L,XL,2XL — để trống nếu không có size"
                   value={product.sizes}
                   onChange={(e) => handleSizesChange(e.target.value)}
                 />
+                <p style={{ fontSize: "11px", color: "#9ca3af", marginTop: "4px" }}>
+                  <i className="fa-solid fa-circle-info" style={{ marginRight: "4px" }} />
+                  Túi, mũ, balo... không cần size — để trống ô này
+                </p>
               </div>
               <div style={s.group}>
                 <label style={s.label}>Màu sắc (cách nhau bởi dấu phẩy)</label>
@@ -594,6 +609,24 @@ const AddProduct = () => {
                   setProduct({ ...product, description: e.target.value })
                 }
               />
+            </div>
+
+            <div style={s.group}>
+              <label style={s.label}>
+                <i className="fa-solid fa-ruler" style={{ marginRight: "6px", color: "#6b7280" }} />
+                Ảnh hướng dẫn chọn size (URL)
+              </label>
+              <input
+                style={s.input}
+                type="text"
+                placeholder="Dán link ảnh bảng size..."
+                value={product.sizeGuide}
+                onChange={(e) => setProduct({ ...product, sizeGuide: e.target.value })}
+              />
+              <p style={{ fontSize: "11px", color: "#9ca3af", marginTop: "4px" }}>
+                <i className="fa-solid fa-circle-info" style={{ marginRight: "4px" }} />
+                Ảnh này hiện khi user click "Hướng dẫn chọn size"
+              </p>
             </div>
           </div>
 

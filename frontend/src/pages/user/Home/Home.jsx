@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { productAPI, bannerAPI, newsAPI, BASE_URL } from "../../../services/api";
 import { normalizeProduct } from "../../../hooks/useProducts";
 import ProductCard from "../../../components/Product/ProductCard";
@@ -107,7 +107,20 @@ const Home = () => {
     setIsModalOpen(true);
   };
 
-  // ── Component hàng sản phẩm + banner ─────────────────────────────────────
+  const navigate = useNavigate();
+
+  // Map tab → route
+  const TAB_ROUTES = {
+    "Hàng mới":   "/new",
+    "Bán chạy":   "/best-seller",
+    "Đồ Đông":    "/collections/ao-khoac",
+    "Áo Thun":    "/collections/ao-thun",
+    "Áo Sơ mi":   "/collections/somi",
+    "Áo Polo":    "/collections/ao-polo",
+    "Quần Tây":   "/collections/quan-tay",
+    "Quần Jean":  "/collections/quan-jeans",
+    "Quần Short": "/collections/quan-short",
+  };
   const ProductRowWithBanner = ({ rowKey, tabList }) => {
     const currentTab = rowTabs[rowKey];
     const displayProducts = productData[currentTab] || [];
@@ -139,7 +152,12 @@ const Home = () => {
             <img src={currentBanner} alt={currentTab} style={st.leftBannerImg} />
             <div style={st.bannerOverlay}>
               <h2 style={st.bannerTitleText}>{currentTab.toUpperCase()}</h2>
-              <button style={st.btnXemNgay}>XEM NGAY</button>
+              <button
+                style={st.btnXemNgay}
+                onClick={() => navigate(TAB_ROUTES[currentTab] || "/products")}
+              >
+                XEM NGAY
+              </button>
             </div>
           </div>
 

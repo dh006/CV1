@@ -46,6 +46,7 @@ const QuickViewModal = ({ product, isOpen, onClose, onAdd }) => {
   const [selectedSize, setSelectedSize] = useState(null);
   const [selectedColor, setSelectedColor] = useState(null);
   const [mainImg, setMainImg] = useState("");
+  const [showSizeGuide, setShowSizeGuide] = useState(false);
 
   useEffect(() => {
     if (isOpen && product) {
@@ -73,17 +74,32 @@ const QuickViewModal = ({ product, isOpen, onClose, onAdd }) => {
     .map((img) => img.startsWith("http") ? img : getImgUrl(img))
     .filter((v, i, a) => a.indexOf(v) === i);
 
-  // Map màu → ảnh
+  // Map màu → ảnh: ưu tiên colorImages từ DB, fallback về index
   const colors = parseList(product.colors);
-  const colorImageMap = {};
-  colors.forEach((c, i) => { if (allImages[i]) colorImageMap[c] = allImages[i]; });
+  const colorImageMap = (() => {
+    if (product.colorImages) {
+      try {
+        const map = JSON.parse(product.colorImages);
+        const resolved = {};
+        Object.entries(map).forEach(([c, img]) => {
+          resolved[c] = img ? getImgUrl(img) : null;
+        });
+        return resolved;
+      } catch {}
+    }
+    // Fallback index-based
+    const map = {};
+    colors.forEach((c, i) => { if (allImages[i]) map[c] = allImages[i]; });
+    return map;
+  })();
 
   const handleColorSelect = (c) => {
     setSelectedColor(c);
     if (colorImageMap[c]) setMainImg(colorImageMap[c]);
   };
 
-  const sizes = parseList(product.sizes).length > 0 ? parseList(product.sizes) : ["S", "M", "L", "XL", "2XL"];
+  const sizes = parseList(product.sizes);
+  const hasSizes = sizes.length > 0;
 
   const sizeStock = (() => { try { return JSON.parse(product.sizeStock || "{}"); } catch { return {}; } })();
   const isSizeOut = (sz) => sizeStock[sz] !== undefined ? sizeStock[sz] === 0 : false;
@@ -94,14 +110,14 @@ const QuickViewModal = ({ product, isOpen, onClose, onAdd }) => {
   const isOutOfStock = product.quantity === 0;
 
   const handleAddToCart = () => {
-    if (!selectedSize) { alert("Vui lòng chọn kích thước!"); return; }
-    onAdd({ ...product, image: getImgUrl(product.image), quantity, size: selectedSize, color: selectedColor });
+    if (hasSizes && !selectedSize) { alert("Vui lòng chọn kích thước!"); return; }
+    onAdd({ ...product, image: getImgUrl(product.image), quantity, size: selectedSize || "", color: selectedColor });
     onClose();
   };
 
   const handleBuyNow = () => {
-    if (!selectedSize) { alert("Vui lòng chọn kích thước!"); return; }
-    onAdd({ ...product, image: getImgUrl(product.image), quantity, size: selectedSize, color: selectedColor });
+    if (hasSizes && !selectedSize) { alert("Vui lòng chọn kích thước!"); return; }
+    onAdd({ ...product, image: getImgUrl(product.image), quantity, size: selectedSize || "", color: selectedColor });
     onClose();
     navigate("/cart");
   };
@@ -159,7 +175,7 @@ const QuickViewModal = ({ product, isOpen, onClose, onAdd }) => {
               {discountPct && <span style={s.discTag}>-{discountPct}%</span>}
             </div>
 
-            {/* MÀU SẮC — swatch tròn */}
+            {/* MÀU SẮC — thumbnail ảnh */}
             {colors.length > 0 && (
               <div style={s.optGroup}>
                 <p style={s.optLabel}>MÀU SẮC: <strong style={{ color: "#111" }}>{selectedColor || "Chưa chọn"}</strong></p>
@@ -168,13 +184,38 @@ const QuickViewModal = ({ product, isOpen, onClose, onAdd }) => {
                     const hex = getColorHex(c);
                     const isLight = ["#f0f0f0", "#fef3c7", "#d4b896"].includes(hex);
                     const isSel = selectedColor === c;
+                    const thumbImg = colorImageMap[c];
                     return (
                       <button key={c} onClick={() => handleColorSelect(c)} title={c}
-                        style={{ ...s.colorSwatch, background: hex,
-                          border: isSel ? "2.5px solid #111" : isLight ? "1.5px solid #ccc" : "1.5px solid transparent",
+                        style={{
+                          width: "46px", height: "46px",
+                          borderRadius: "50%",
+                          padding: 0,
+                          overflow: "hidden",
+                          cursor: "pointer",
+                          flexShrink: 0,
+                          border: isSel ? "2.5px solid #111" : "1.5px solid #e5e7eb",
                           boxShadow: isSel ? "0 0 0 3px rgba(0,0,0,0.12)" : "none",
-                          transform: isSel ? "scale(1.18)" : "scale(1)" }}>
-                        {isSel && <span style={{ color: isLight ? "#111" : "#fff", fontSize: "11px", fontWeight: "900" }}>✓</span>}
+                          transform: isSel ? "scale(1.15)" : "scale(1)",
+                          transition: "all 0.2s",
+                          background: thumbImg ? "transparent" : hex,
+                          position: "relative",
+                        }}>
+                        {thumbImg ? (
+                          <img
+                            src={thumbImg}
+                            alt={c}
+                            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                            onError={(e) => { e.target.style.display = "none"; e.target.parentNode.style.background = hex; }}
+                          />
+                        ) : (
+                          isSel && <span style={{ color: isLight ? "#111" : "#fff", fontSize: "11px", fontWeight: "900" }}>✓</span>
+                        )}
+                        {isSel && thumbImg && (
+                          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.18)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <i className="fa-solid fa-check" style={{ color: "#fff", fontSize: "13px", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.5))" }} />
+                          </div>
+                        )}
                       </button>
                     );
                   })}
@@ -182,11 +223,19 @@ const QuickViewModal = ({ product, isOpen, onClose, onAdd }) => {
               </div>
             )}
 
-            {/* SIZE */}
+            {/* SIZE — chỉ hiện khi có size */}
+            {hasSizes && (
             <div style={s.optGroup}>
               <div style={s.optLabelRow}>
                 <p style={s.optLabel}>KÍCH THƯỚC: <strong style={{ color: "#111" }}>{selectedSize || "CHƯA CHỌN"}</strong></p>
-                <span style={s.sizeGuide}>Hướng dẫn chọn size</span>
+                <span
+                  style={{ ...s.sizeGuide, color: product.sizeGuide ? "#001C40" : "#888" }}
+                  onClick={() => product.sizeGuide && setShowSizeGuide(true)}
+                  title={product.sizeGuide ? "Xem bảng size" : "Chưa có bảng size"}
+                >
+                  <i className="fa-solid fa-ruler" style={{ marginRight: "4px" }} />
+                  Hướng dẫn chọn size
+                </span>
               </div>
               <div style={s.sizeRow}>
                 {sizes.map((sz) => {
@@ -208,6 +257,7 @@ const QuickViewModal = ({ product, isOpen, onClose, onAdd }) => {
                 })}
               </div>
             </div>
+            )}
 
             {/* MÔ TẢ ngắn */}
             {product.description && (
@@ -233,7 +283,7 @@ const QuickViewModal = ({ product, isOpen, onClose, onAdd }) => {
                   <button style={s.qBtn} onClick={() => setQuantity(quantity + 1)}>+</button>
                 </div>
                 <button style={s.addBtn} onClick={handleAddToCart}>THÊM VÀO GIỎ</button>
-                <button style={{ ...s.buyBtn, background: selectedSize ? "#111" : "#ccc", cursor: selectedSize ? "pointer" : "not-allowed" }}
+                <button style={{ ...s.buyBtn, background: "#111", cursor: "pointer" }}
                   onClick={handleBuyNow}>MUA NGAY</button>
               </div>
             ) : (
@@ -248,6 +298,41 @@ const QuickViewModal = ({ product, isOpen, onClose, onAdd }) => {
           </div>
         </div>
       </div>
+
+      {/* SIZE GUIDE POPUP */}
+      {showSizeGuide && product.sizeGuide && (
+        <div
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", zIndex: 99999, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}
+          onClick={() => setShowSizeGuide(false)}
+        >
+          <div
+            style={{ background: "#fff", borderRadius: "14px", padding: "24px", maxWidth: "680px", width: "100%", maxHeight: "88vh", overflowY: "auto", position: "relative", boxShadow: "0 24px 60px rgba(0,0,0,0.35)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <h3 style={{ fontSize: "15px", fontWeight: "800", color: "#111", margin: 0 }}>
+                <i className="fa-solid fa-ruler" style={{ marginRight: "8px", color: "#001C40" }} />
+                Hướng dẫn chọn size
+              </h3>
+              <button
+                onClick={() => setShowSizeGuide(false)}
+                style={{ background: "#f3f4f6", border: "none", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer", fontSize: "15px", color: "#555", display: "flex", alignItems: "center", justifyContent: "center" }}
+              >
+                <i className="fa-solid fa-xmark" />
+              </button>
+            </div>
+            <img
+              src={product.sizeGuide}
+              alt="Bảng hướng dẫn chọn size"
+              style={{ width: "100%", borderRadius: "8px", display: "block" }}
+              onError={(e) => { e.target.style.display = "none"; e.target.nextSibling.style.display = "block"; }}
+            />
+            <p style={{ display: "none", textAlign: "center", color: "#9ca3af", padding: "40px 0", fontSize: "14px" }}>
+              Không tải được ảnh. Vui lòng thử lại.
+            </p>
+          </div>
+        </div>
+      )}
     </div>,
     document.body
   );

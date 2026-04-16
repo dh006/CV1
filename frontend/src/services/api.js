@@ -115,7 +115,7 @@ export const feedbackAPI = {
 
 // ── Stats (Admin) ─────────────────────────────────────────────────────────────
 export const statsAPI = {
-  getDashboard: () => api.get("/admin/stats"),
+  getDashboard: (params) => api.get("/admin/stats", { params }),
 };
 
 // ── Payment ───────────────────────────────────────────────────────────────────

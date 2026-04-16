@@ -1,20 +1,25 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; // Dùng để chuyển trang
+import { useNavigate } from "react-router-dom";
 import Badge from "../Common/Badge";
+import { BASE_URL } from "../../services/api";
+
+const resolveImg = (img) => {
+  if (!img) return "";
+  return img.startsWith("http") ? img : `${BASE_URL}${img}`;
+};
 
 const ProductCard = ({ product, onQuickView }) => {
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
 
-  // Tính toán phần trăm giảm giá
   const discountPercent = product.oldPrice
     ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100)
     : null;
 
-  // Hàm xử lý khi click vào sản phẩm
+  const mainImg = resolveImg(product.image);
+  const hoverImg = resolveImg(product.hoverImage);
+
   const handleProductClick = () => {
-    // Chuyển hướng đến trang chi tiết sản phẩm dựa trên slug
-    // Giống link: icondenim.com/products/ten-san-pham
     navigate(`/products/${product.slug}`);
   };
 
@@ -26,24 +31,23 @@ const ProductCard = ({ product, onQuickView }) => {
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      // CLICK VÀO CARD SẼ CHUYỂN TRANG
       onClick={handleProductClick}
     >
       <div style={styles.imageContainer}>
-        {/* Lớp ảnh 1: Mặc định */}
+        {/* Ảnh đại diện */}
         <img
-          src={product.image}
+          src={mainImg}
           alt={product.name}
           style={{
             ...styles.image,
-            opacity: isHovered && product.hoverImage ? 0 : 1,
+            opacity: isHovered && hoverImg ? 0 : 1,
           }}
         />
 
-        {/* Lớp ảnh 2: Hiện khi hover */}
-        {product.hoverImage && (
+        {/* Ảnh hover */}
+        {hoverImg && (
           <img
-            src={product.hoverImage}
+            src={hoverImg}
             alt={`${product.name} hover`}
             style={{
               ...styles.image,

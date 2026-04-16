@@ -111,7 +111,7 @@ const ProfilePage = () => {
           name: detail.Product.name,
           price: detail.price,
           image: detail.Product.image
-            ? (detail.Product.image.startsWith("http") ? detail.Product.image : `http://localhost:5000${detail.Product.image}`)
+            ? (detail.Product.image.startsWith("http") ? detail.Product.image : `${BASE_URL}${detail.Product.image}`)
             : "",
           size: detail.size || "",
           color: detail.color || "",
@@ -173,7 +173,7 @@ const ProfilePage = () => {
             <p style={s.userEmail}>{user.email}</p>
             {user.role === 1 && <span style={s.adminBadge}>Quản trị Admin</span>}
             {user.role === 2 && <span style={s.saleBadge}>Nhân viên Sale</span>}
-            {user.role === 0 && user.points > 0 && (
+            {user.points > 0 && (
               <div style={{ marginTop: "10px", padding: "6px 14px", background: "rgba(245,158,11,0.2)", borderRadius: "999px", display: "inline-flex", alignItems: "center", gap: "5px" }}>
                 <i className="fa-solid fa-star" style={{ color: "#f59e0b", fontSize: "12px" }} />
                 <span style={{ color: "#fff", fontSize: "12px", fontWeight: "700" }}>{user.points} điểm</span>
@@ -305,7 +305,7 @@ const ProfilePage = () => {
                               <div key={i} style={s.orderItem}>
                                 {detail.Product?.image && (
                                   <img
-                                    src={detail.Product.image.startsWith("http") ? detail.Product.image : `http://localhost:5000${detail.Product.image}`}
+                                    src={detail.Product.image.startsWith("http") ? detail.Product.image : `${BASE_URL}${detail.Product.image}`}
                                     alt={detail.Product?.name}
                                     style={s.orderItemImg}
                                     onError={(e) => { e.target.style.display = "none"; }}

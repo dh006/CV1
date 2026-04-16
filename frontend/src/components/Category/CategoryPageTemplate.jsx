@@ -22,6 +22,8 @@ const CategoryPageTemplate = ({
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [sortOrder, setSortOrder] = useState("default");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 20;
 
   const sorted = useMemo(() => {
     const list = [...products];
@@ -30,6 +32,14 @@ const CategoryPageTemplate = ({
     if (sortOrder === "newest") list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     return list;
   }, [products, sortOrder]);
+
+  const totalPages = Math.ceil(sorted.length / ITEMS_PER_PAGE);
+  const currentItems = sorted.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <div style={s.container}>
@@ -55,8 +65,13 @@ const CategoryPageTemplate = ({
       <div style={s.toolbar}>
         <p style={s.count}>
           {loading ? "Đang tải..." : `${sorted.length} sản phẩm`}
+          {!loading && sorted.length > 0 && totalPages > 1 && (
+            <span style={{ color: "#9ca3af", marginLeft: "8px" }}>
+              — Trang {currentPage}/{totalPages}
+            </span>
+          )}
         </p>
-        <select style={s.select} value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
+        <select style={s.select} value={sortOrder} onChange={(e) => { setSortOrder(e.target.value); setCurrentPage(1); }}>
           <option value="default">Nổi bật</option>
           <option value="newest">Mới nhất</option>
           <option value="price-asc">Giá: Thấp → Cao</option>
@@ -70,15 +85,53 @@ const CategoryPageTemplate = ({
           {Array(10).fill(0).map((_, i) => <div key={i} style={s.skeleton} />)}
         </div>
       ) : sorted.length > 0 ? (
-        <div style={s.grid}>
-          {sorted.map((p) => (
-            <ProductCard
-              key={p.id}
-              product={p}
-              onQuickView={(prod) => { setSelectedProduct(prod); setIsModalOpen(true); }}
-            />
-          ))}
-        </div>
+        <>
+          <div style={s.grid}>
+            {currentItems.map((p) => (
+              <ProductCard
+                key={p.id}
+                product={p}
+                onQuickView={(prod) => { setSelectedProduct(prod); setIsModalOpen(true); }}
+              />
+            ))}
+          </div>
+
+          {/* PHÂN TRANG */}
+          {totalPages > 1 && (
+            <div style={s.pagination}>
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                style={{ ...s.pageBtn, opacity: currentPage === 1 ? 0.4 : 1 }}
+              >
+                ‹
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                // Hiện tối đa 7 nút, ẩn bớt ở giữa nếu nhiều trang
+                if (totalPages <= 7 || page === 1 || page === totalPages ||
+                  (page >= currentPage - 2 && page <= currentPage + 2)) {
+                  return (
+                    <button key={page} onClick={() => handlePageChange(page)}
+                      style={{ ...s.pageBtn, ...(currentPage === page ? s.pageBtnActive : {}) }}>
+                      {page}
+                    </button>
+                  );
+                }
+                if (page === currentPage - 3 || page === currentPage + 3) {
+                  return <span key={page} style={s.pageDots}>...</span>;
+                }
+                return null;
+              })}
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                style={{ ...s.pageBtn, opacity: currentPage === totalPages ? 0.4 : 1 }}
+              >
+                ›
+              </button>
+            </div>
+          )}
+        </>
       ) : (
         <div style={s.empty}>
           <span style={{ fontSize: "56px" }}>👕</span>
@@ -115,6 +168,10 @@ const s = {
   skeleton: { aspectRatio: "3/4", background: "#f3f4f6", borderRadius: "8px", animation: "pulse 1.5s ease-in-out infinite" },
   empty: { textAlign: "center", padding: "80px 20px", display: "flex", flexDirection: "column", alignItems: "center", gap: "16px", color: "#9ca3af" },
   backHome: { display: "inline-block", padding: "12px 28px", background: "#001C40", color: "#fff", textDecoration: "none", borderRadius: "8px", fontWeight: "700", fontSize: "13px" },
+  pagination: { display: "flex", justifyContent: "center", alignItems: "center", gap: "6px", padding: "40px 5%" },
+  pageBtn: { width: "38px", height: "38px", border: "1.5px solid #e5e7eb", borderRadius: "8px", background: "#fff", cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#374151", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" },
+  pageBtnActive: { background: "#001C40", color: "#fff", border: "1.5px solid #001C40" },
+  pageDots: { width: "38px", textAlign: "center", color: "#9ca3af", fontSize: "14px" },
 };
 
 export default CategoryPageTemplate;

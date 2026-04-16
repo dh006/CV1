@@ -102,11 +102,11 @@ exports.createOrder = async (req, res) => {
       await voucherObj.update({ usedCount: voucherObj.usedCount + 1 });
     }
 
-    // Cộng điểm thưởng (1% giá trị đơn = 1 điểm) + trừ điểm đã dùng
+    // Cộng điểm thưởng (100.000đ = 1 điểm) + trừ điểm đã dùng
     if (req.userId) {
       const user = await User.findByPk(req.userId);
       if (user) {
-        const earnedPoints = Math.floor(finalTotal / 10000); // 10.000đ = 1 điểm
+        const earnedPoints = Math.floor(finalTotal / 100000); // 100.000đ = 1 điểm
         const newPoints = Math.max(0, (user.points || 0) - pointsUsed) + earnedPoints;
         await user.update({ points: newPoints });
       }
@@ -147,6 +147,10 @@ exports.confirmPaid = async (req, res) => {
     const { orderCode } = req.params;
     const order = await Order.findOne({ where: { orderCode } });
     if (!order) return res.status(404).json({ message: "Không tìm thấy đơn hàng!" });
+    // Kiểm tra đơn hàng thuộc về user này
+    if (order.userId && order.userId !== req.userId) {
+      return res.status(403).json({ message: "Bạn không có quyền xác nhận đơn hàng này!" });
+    }
     if (
       order.paymentMethod !== "VNPAY_QR" &&
       order.paymentMethod !== "MOMO" &&

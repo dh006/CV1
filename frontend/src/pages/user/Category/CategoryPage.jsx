@@ -14,7 +14,7 @@ const CategoryPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortOrder, setSortOrder] = useState("default");
-  const itemsPerPage = 30;
+  const itemsPerPage = 20;
 
   // 1. Dữ liệu các nhóm sản phẩm - Đảm bảo PATH khớp với Route trong App.js
   const categoryGroups = [
@@ -197,14 +197,13 @@ const CategoryPage = () => {
       {/* SECTION 5: SEO FOOTER */}
       <div style={styles.seoFooter}>
         <div style={styles.seoTopText}>
-          Shop quần áo nam cao cấp ICONDENIM ghi điểm tuyệt đối trong lòng khách
+          Shop quần áo nam cao cấp DIEP COLLECTION ghi điểm tuyệt đối trong lòng khách
           hàng nhờ chất lượng sản phẩm hoàn hảo, tỉ mỉ trong từng khâu chọn chất
           liệu đến thiết kế.
         </div>
         <h3 style={styles.seoHeading}>
           Quần Áo Nam Đẹp, Shop Thời Trang Nam Hàng Hiệu
         </h3>
-        <button style={styles.btnXemThem}>XEM THÊM</button>
       </div>
 
       <QuickViewModal
@@ -339,14 +338,6 @@ const styles = {
     color: "#888",
     fontWeight: "400",
     marginBottom: "25px",
-  },
-  btnXemThem: {
-    padding: "10px 40px",
-    border: "1.5px solid #001C40",
-    borderRadius: "25px",
-    background: "transparent",
-    fontWeight: "bold",
-    cursor: "pointer",
   },
 };
 
